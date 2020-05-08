@@ -1,0 +1,23 @@
+-- size of our actual window
+WINDOW_WIDTH = 1280
+WINDOW_HEIGHT = 720
+
+-- size we're trying to emulate with push
+VIRTUAL_WIDTH = 256
+VIRTUAL_HEIGHT = 144
+
+
+--- quads size
+TILE_SIZE = 16
+
+CHARACTER_WIDTH = 16
+CHARACTER_HEIGHT = 20
+
+-- tile ID constants
+SKY = 2
+GROUND = 1
+
+GRAVITY = 7
+CAMERA_SCROLL_SPEED = 40
+CHARACTER_MOVE_SPEED = 40
+JUMP_VELOCITY = -200
