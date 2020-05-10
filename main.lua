@@ -3,11 +3,20 @@ require 'src/Dependencies'
 function love.load()
     math.randomseed(os.time())
 
-    tiles = {}
-
     -- load images
     tileSheet = love.graphics.newImage('graphics/tiles.png')
     quads = GenerateQuads(tileSheet, TILE_SIZE, TILE_SIZE)
+
+    topperSheet = love.graphics.newImage('graphics/tile_tops.png')
+    topperQuads = GenerateQuads(topperSheet, TILE_SIZE, TILE_SIZE)
+
+    -- divide quad tables into tile sets
+    tilesets = GenerateTileSets(quads, TILE_SETS_WIDE, TILE_SETS_TALL, TILE_SET_WIDTH, TILE_SET_HEIGHT)
+    toppersets = GenerateTileSets(topperQuads, TOPPER_SETS_WIDE, TOPPER_SETS_TALL, TILE_SET_WIDTH, TILE_SET_HEIGHT)
+
+    -- random tile set and topper set for the level
+    tileset = math.random(#tilesets)
+    topperset = math.random(#toppersets)
 
     characterSheet = love.graphics.newImage('graphics/character.png')
     characterQuads = GenerateQuads(characterSheet, CHARACTER_WIDTH, CHARACTER_HEIGHT)
@@ -21,6 +30,10 @@ function love.load()
         interval = 0.2
     }
     jumpAnimation = Animation{
+        frames = {4},
+        interval = 1
+    }
+    downAnimation = Animation{
         frames = {4},
         interval = 1
     }
@@ -41,15 +54,7 @@ function love.load()
     backgroundG = math.random(255) / 1000
     backgroundB = math.random(255) / 1000
 
-    for y = 1, mapHeight do
-        table.insert(tiles, {})
-
-        for x = 1, mapWidth do
-            table.insert(tiles[y],{
-                id = y < 7 and SKY or GROUND -- if y < 5: id = SKY else id = GROUND
-            })
-        end
-    end
+    tiles = generateLevel()
 
     love.graphics.setDefaultFilter('nearest', 'nearest')
     love.window.setTitle('Crayo Mario')
@@ -74,12 +79,17 @@ function love.keypressed(key)
         characterDY = JUMP_VELOCITY
         currentAnimation = jumpAnimation
     end
+
+    if key == 'r' then
+        tileset = math.random(#tilesets)
+        topperset = math.random(#toppersets)
+    end
 end
 
 function love.update(dt)
     characterDY = characterDY + GRAVITY
     characterY = characterY + characterDY * dt
-
+    
     if characterY > ((7 - 1) * TILE_SIZE) - CHARACTER_HEIGHT then
         characterY = ((7 - 1) * TILE_SIZE) - CHARACTER_HEIGHT
         characterDY = 0
@@ -104,6 +114,8 @@ function love.update(dt)
         end
 
         direction = 'right'
+    elseif love.keyboard.isDown('down') then
+        currentAnimation = downAnimation
     else
         currentAnimation = idleAnimation
     end
@@ -120,7 +132,13 @@ function love.draw()
         for y = 1, mapWidth do
             for x = 1, mapHeight do
                 local tile = tiles[y][x]
-                love.graphics.draw(tileSheet, quads[tile.id], (x-1) * TILE_SIZE, (y-1) * TILE_SIZE)
+                love.graphics.draw(tileSheet, tilesets[tileset][tile.id],
+                    (x-1) * TILE_SIZE, (y-1) * TILE_SIZE)
+
+                if tile.topper then 
+                    love.graphics.draw(topperSheet, toppersets[topperset][tile.id],
+                        (x-1) * TILE_SIZE, (y-1) * TILE_SIZE)
+                end
             end
         end
 
@@ -140,4 +158,21 @@ function love.draw()
             CHARACTER_WIDTH / 2, CHARACTER_HEIGHT / 2)
 
     push:finish()
+end
+
+function generateLevel()
+    local tiles = {}
+
+    for y=1, mapHeight do
+        table.insert(tiles, {})
+
+        for x=1, mapWidth do
+            table.insert(tiles[y],{
+                id = y < 7 and SKY or GROUND,
+                topper = y == 7 and true or false
+            })
+        end
+    end
+
+    return tiles
 end
